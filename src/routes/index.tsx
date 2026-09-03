@@ -1,24 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { isAuthed } from "@/lib/role-store";
-import {
-  CLIENT_ID,
-  TENANT,
-  loginPopup,
-  tenantAccounts,
-} from "@/lib/azure-ad";
-import { getEmployee, isManagerUser } from "@/lib/mock-data";
-import {
-  GraduationCap,
-  ShieldCheck,
-  LineChart,
-  Users,
-  Loader2,
-  ChevronRight,
-} from "lucide-react";
+import { TENANT, loginPopup } from "@/lib/azure-ad";
+import { GraduationCap, ShieldCheck, LineChart, Users, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: LoginPage,
@@ -37,23 +22,22 @@ function MicrosoftLogo({ className = "" }: { className?: string }) {
 
 function LoginPage() {
   const navigate = useNavigate();
-  const [picking, setPicking] = useState(false);
-  const [pending, setPending] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAuthed()) navigate({ to: "/dashboard" });
   }, [navigate]);
 
-  const chooseAccount = async (oid: string) => {
-    setPending(oid);
+  const signIn = async () => {
+    setPending(true);
     setError(null);
     try {
-      await loginPopup(oid);
+      await loginPopup();
       navigate({ to: "/dashboard" });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Sign-in failed");
-      setPending(null);
+      setPending(false);
     }
   };
 
@@ -74,79 +58,29 @@ function LoginPage() {
         <div className="mx-auto w-full max-w-sm">
           <h1 className="text-3xl font-semibold tracking-tight">Welcome back</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            TIH Learn uses your company Microsoft account. Single sign-on is handled
-            by Azure AD (Microsoft Entra ID) for the <strong>{TENANT}</strong> tenant.
+            TIH Learn uses your company Microsoft account. Single sign-on is handled by Azure AD
+            (Microsoft Entra ID) for the <strong>{TENANT}</strong> tenant.
           </p>
 
-          {!picking ? (
-            <div className="mt-8 space-y-4">
-              <Button
-                onClick={() => setPicking(true)}
-                className="w-full justify-center gap-3 bg-ink text-ink-foreground hover:bg-ink/90"
-              >
-                <MicrosoftLogo /> Sign in with Microsoft
-              </Button>
-              <div className="rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
-                On sign-in we read your directory profile, your Azure AD groups and{" "}
-                <code>/me/directReports</code> — if you manage people you land in the
-                manager workspace with your own team loaded.
-              </div>
+          <div className="mt-8 space-y-4">
+            <Button
+              onClick={signIn}
+              disabled={pending}
+              className="w-full justify-center gap-3 bg-ink text-ink-foreground hover:bg-ink/90"
+            >
+              {pending ? <Loader2 className="size-4 animate-spin" /> : <MicrosoftLogo />} Sign in
+              with Microsoft
+            </Button>
+            <div className="rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
+              On sign-in we read your directory profile, your Azure AD groups and{" "}
+              <code>/me/directReports</code> — if you manage people you land in the manager
+              workspace with your own team loaded.
             </div>
-          ) : (
-            <div className="mt-8 space-y-2">
-              <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Pick an account
-              </div>
-              {tenantAccounts.map((a) => {
-                const emp = getEmployee(a.oid)!;
-                const manager = isManagerUser(a.oid);
-                return (
-                  <button
-                    key={a.oid}
-                    disabled={pending !== null}
-                    onClick={() => chooseAccount(a.oid)}
-                    className="flex w-full items-center gap-3 rounded-lg border p-3 text-left transition hover:bg-muted disabled:opacity-60"
-                  >
-                    <Avatar className="size-9">
-                      <AvatarFallback className={`${emp.avatarColor} text-white text-xs`}>
-                        {a.name.split(" ").map((n) => n[0]).join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        {a.name}
-                        {manager && (
-                          <Badge variant="secondary" className="text-[10px]">
-                            Manager
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="truncate text-xs text-muted-foreground">
-                        {a.username}
-                      </div>
-                    </div>
-                    {pending === a.oid ? (
-                      <Loader2 className="size-4 animate-spin text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="size-4 text-muted-foreground" />
-                    )}
-                  </button>
-                );
-              })}
-              {error && <p className="text-xs text-destructive">{error}</p>}
-              <button
-                type="button"
-                onClick={() => setPicking(false)}
-                className="pt-2 text-xs text-muted-foreground hover:underline"
-              >
-                Use a different sign-in option
-              </button>
-            </div>
-          )}
+            {error && <p className="text-xs text-destructive">{error}</p>}
+          </div>
 
           <p className="mt-6 text-center text-[11px] text-muted-foreground">
-            Prototype build — Azure AD is simulated (app id {CLIENT_ID.slice(0, 8)}…).
-            No real Microsoft credentials are collected.
+            Sign-in uses your organization’s Microsoft Entra ID account and directory permissions.
           </p>
         </div>
 
@@ -169,8 +103,8 @@ function LoginPage() {
               <span className="text-brand">move your career forward.</span>
             </h2>
             <p className="mt-4 max-w-md text-sm text-ink-foreground/70">
-              Courses, learning journeys and manager oversight — everything TIH teams
-              need to stay compliant, capable and current.
+              Courses, learning journeys and manager oversight — everything TIH teams need to stay
+              compliant, capable and current.
             </p>
           </div>
 

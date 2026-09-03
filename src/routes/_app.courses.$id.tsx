@@ -16,7 +16,8 @@ import {
   Star,
   Users,
 } from "lucide-react";
-import { CURRENT_EMPLOYEE_ID, getCourse, progressFor } from "@/lib/mock-data";
+import { getCourse, progressFor } from "@/lib/mock-data";
+import { useAzureProfile } from "@/lib/role-store";
 import { fmtTime, useCourseState } from "@/lib/learning-store";
 
 const SAMPLE_VIDEO =
@@ -51,7 +52,8 @@ export const Route = createFileRoute("/_app/courses/$id")({
 
 function CoursePage() {
   const { course } = Route.useLoaderData();
-  const seeded = progressFor(CURRENT_EMPLOYEE_ID, course.id);
+  const employeeId = useAzureProfile()?.employee.id ?? "";
+  const seeded = progressFor(employeeId, course.id);
   const { state, update, log } = useCourseState(course.id);
 
   const videoRef = useRef<HTMLVideoElement>(null);

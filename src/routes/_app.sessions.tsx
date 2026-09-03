@@ -9,7 +9,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CURRENT_EMPLOYEE_ID, sessions } from "@/lib/mock-data";
+import { sessions } from "@/lib/mock-data";
+import { useAzureProfile } from "@/lib/role-store";
 import { Clock } from "lucide-react";
 
 export const Route = createFileRoute("/_app/sessions")({
@@ -18,8 +19,7 @@ export const Route = createFileRoute("/_app/sessions")({
       { title: "My Sessions — TIH Learn" },
       {
         name: "description",
-        content:
-          "Your recent learning session history and idle-timeout events.",
+        content: "Your recent learning session history and idle-timeout events.",
       },
     ],
   }),
@@ -27,15 +27,14 @@ export const Route = createFileRoute("/_app/sessions")({
 });
 
 function SessionsPage() {
-  const mine = sessions.filter((s) => s.employeeId === CURRENT_EMPLOYEE_ID);
+  const employeeId = useAzureProfile()?.employee.id ?? "";
+  const mine = sessions.filter((s) => s.employeeId === employeeId);
   const totalMin = mine.reduce((sum, s) => sum + s.durationMin, 0);
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">
-          Session history
-        </h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Session history</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Sessions automatically end after 15 minutes of inactivity.
         </p>
@@ -46,18 +45,14 @@ function SessionsPage() {
           <CardContent className="pt-6">
             <Clock className="size-4 text-muted-foreground" />
             <div className="mt-2 text-2xl font-semibold">{mine.length}</div>
-            <div className="text-xs text-muted-foreground">
-              Sessions this week
-            </div>
+            <div className="text-xs text-muted-foreground">Sessions this week</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <Clock className="size-4 text-muted-foreground" />
             <div className="mt-2 text-2xl font-semibold">{totalMin}m</div>
-            <div className="text-xs text-muted-foreground">
-              Total learning time
-            </div>
+            <div className="text-xs text-muted-foreground">Total learning time</div>
           </CardContent>
         </Card>
         <Card>
@@ -66,9 +61,7 @@ function SessionsPage() {
             <div className="mt-2 text-2xl font-semibold">
               {Math.round(totalMin / mine.length) || 0}m
             </div>
-            <div className="text-xs text-muted-foreground">
-              Average session length
-            </div>
+            <div className="text-xs text-muted-foreground">Average session length</div>
           </CardContent>
         </Card>
       </div>
@@ -92,15 +85,11 @@ function SessionsPage() {
                   <TableCell className="whitespace-nowrap text-muted-foreground">
                     {s.start}
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-muted-foreground">
-                    {s.end}
-                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-muted-foreground">{s.end}</TableCell>
                   <TableCell>
                     <Badge variant="secondary">{s.durationMin}m</Badge>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {s.activity}
-                  </TableCell>
+                  <TableCell className="text-muted-foreground">{s.activity}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

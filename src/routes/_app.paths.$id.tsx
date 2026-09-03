@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, CheckCircle2, Circle, Lock } from "lucide-react";
-import { CURRENT_EMPLOYEE_ID, getCourse, getPath, progressFor } from "@/lib/mock-data";
+import { getCourse, getPath, progressFor } from "@/lib/mock-data";
+import { useAzureProfile } from "@/lib/role-store";
 
 export const Route = createFileRoute("/_app/paths/$id")({
   loader: ({ params }) => {
@@ -25,9 +26,10 @@ export const Route = createFileRoute("/_app/paths/$id")({
 
 function PathDetail() {
   const { path } = Route.useLoaderData() as { path: import("@/lib/mock-data").LearningPath };
+  const employeeId = useAzureProfile()?.employee.id ?? "";
   const rows = path.courseIds.map((cid: string) => ({
     course: getCourse(cid)!,
-    p: progressFor(CURRENT_EMPLOYEE_ID, cid),
+    p: progressFor(employeeId, cid),
   }));
   const completed = rows.filter((r) => r.p?.status === "completed").length;
   const pct = Math.round((completed / rows.length) * 100);

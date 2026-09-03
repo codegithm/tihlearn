@@ -1,6 +1,18 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+export type DirectoryEmployee = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  department: string;
+  avatarColor: string;
+  managerId: string | null;
+  upn: string;
+  adGroups: string[];
+};
+
 type RoleState = {
   currentRole: "employee" | "manager";
   isAuthenticated: boolean;
@@ -8,6 +20,9 @@ type RoleState = {
     name?: string;
     email?: string;
     id?: string;
+    isManager: boolean;
+    employee: DirectoryEmployee;
+    directReports: DirectoryEmployee[];
   } | null;
   setRole: (role: "employee" | "manager") => void;
   setAuthenticated: (auth: boolean) => void;

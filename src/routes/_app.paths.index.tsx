@@ -4,12 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Route as RouteIcon, Users } from "lucide-react";
-import {
-  CURRENT_EMPLOYEE_ID,
-  learningPaths,
-  progress as allProgress,
-} from "@/lib/mock-data";
-import { useRole } from "@/lib/role-store";
+import { learningPaths, progress as allProgress } from "@/lib/mock-data";
+import { useAzureProfile, useRole } from "@/lib/role-store";
 
 export const Route = createFileRoute("/_app/paths/")({
   head: () => ({
@@ -17,8 +13,7 @@ export const Route = createFileRoute("/_app/paths/")({
       { title: "Learning Paths — TIH Learn" },
       {
         name: "description",
-        content:
-          "Structured, sequenced learning tracks assigned to TIH employees and teams.",
+        content: "Structured, sequenced learning tracks assigned to TIH employees and teams.",
       },
     ],
   }),
@@ -27,18 +22,17 @@ export const Route = createFileRoute("/_app/paths/")({
 
 function PathsPage() {
   const [role] = useRole();
+  const employeeId = useAzureProfile()?.employee.id ?? "";
   const visible =
     role === "manager"
       ? learningPaths
-      : learningPaths.filter((p) => p.assignedTo.includes(CURRENT_EMPLOYEE_ID));
+      : learningPaths.filter((p) => p.assignedTo.includes(employeeId));
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Learning paths
-          </h1>
+          <h1 className="text-3xl font-semibold tracking-tight">Learning paths</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {role === "manager"
               ? "All paths in your organisation."
@@ -46,10 +40,7 @@ function PathsPage() {
           </p>
         </div>
         {role === "manager" && (
-          <Button
-            asChild
-            className="bg-brand text-brand-foreground hover:bg-brand/90"
-          >
+          <Button asChild className="bg-brand text-brand-foreground hover:bg-brand/90">
             <Link to="/manager/assign">Create path</Link>
           </Button>
         )}
@@ -60,9 +51,7 @@ function PathsPage() {
           const done = path.courseIds.filter((cid) =>
             allProgress.find(
               (pr) =>
-                pr.employeeId === CURRENT_EMPLOYEE_ID &&
-                pr.courseId === cid &&
-                pr.status === "completed",
+                pr.employeeId === employeeId && pr.courseId === cid && pr.status === "completed",
             ),
           ).length;
           const pct =
@@ -85,9 +74,7 @@ function PathsPage() {
                   <RouteIcon className="size-3.5" /> Learning path
                 </div>
                 <CardTitle className="text-lg">{path.title}</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  {path.description}
-                </p>
+                <p className="text-sm text-muted-foreground">{path.description}</p>
               </CardHeader>
               <CardContent className="mt-auto space-y-4">
                 <div>
@@ -99,8 +86,7 @@ function PathsPage() {
                 </div>
                 <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                   <Badge variant="secondary" className="gap-1">
-                    <Users className="size-3" /> {path.assignedTo.length}{" "}
-                    assigned
+                    <Users className="size-3" /> {path.assignedTo.length} assigned
                   </Badge>
                   <Badge variant="secondary" className="gap-1">
                     <CalendarDays className="size-3" /> Due{" "}

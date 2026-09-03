@@ -1,11 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,13 +13,12 @@ import {
   TrendingUp,
 } from "lucide-react";
 import {
-  CURRENT_EMPLOYEE_ID,
   assignedPathsFor,
   employeeStats,
   getCourse,
-  getEmployee,
   progress as allProgress,
 } from "@/lib/mock-data";
+import { useAzureProfile } from "@/lib/role-store";
 
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({
@@ -33,8 +26,7 @@ export const Route = createFileRoute("/_app/dashboard")({
       { title: "Dashboard — TIH Learn" },
       {
         name: "description",
-        content:
-          "Your assigned learning, in-progress courses and upcoming deadlines.",
+        content: "Your assigned learning, in-progress courses and upcoming deadlines.",
       },
     ],
   }),
@@ -42,11 +34,12 @@ export const Route = createFileRoute("/_app/dashboard")({
 });
 
 function Dashboard() {
-  const me = getEmployee(CURRENT_EMPLOYEE_ID)!;
-  const stats = employeeStats(me.id);
-  const paths = assignedPathsFor(me.id);
+  const profile = useAzureProfile();
+  const employeeId = profile?.employee.id ?? "";
+  const stats = employeeStats(employeeId);
+  const paths = assignedPathsFor(employeeId);
   const inProgress = allProgress.filter(
-    (p) => p.employeeId === me.id && p.status === "in_progress",
+    (p) => p.employeeId === employeeId && p.status === "in_progress",
   );
 
   const kpis = [
@@ -62,17 +55,14 @@ function Dashboard() {
         <div>
           <p className="text-sm text-muted-foreground">Welcome back,</p>
           <h1 className="text-3xl font-semibold tracking-tight">
-            {me.name.split(" ")[0]} 👋
+            {profile?.employee.name.split(" ")[0] ?? "there"} 👋
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            You have {inProgress.length} courses in progress and{" "}
-            {stats.completionPct}% overall path completion.
+            You have {inProgress.length} courses in progress and {stats.completionPct}% overall path
+            completion.
           </p>
         </div>
-        <Button
-          asChild
-          className="bg-brand text-brand-foreground hover:bg-brand/90"
-        >
+        <Button asChild className="bg-brand text-brand-foreground hover:bg-brand/90">
           <Link to="/courses">Browse the library</Link>
         </Button>
       </div>
@@ -96,10 +86,7 @@ function Dashboard() {
         <div className="space-y-4 lg:col-span-2">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Continue learning</h2>
-            <Link
-              to="/my-learning"
-              className="text-sm text-brand hover:underline"
-            >
+            <Link to="/my-learning" className="text-sm text-brand hover:underline">
               View all
             </Link>
           </div>
@@ -111,15 +98,10 @@ function Dashboard() {
                 <Card key={c.id} className="overflow-hidden">
                   <div className={`h-28 bg-gradient-to-br ${c.cover}`} />
                   <CardContent className="space-y-3 pt-4">
-                    <Badge
-                      variant="secondary"
-                      className="text-[10px] uppercase"
-                    >
+                    <Badge variant="secondary" className="text-[10px] uppercase">
                       {c.category}
                     </Badge>
-                    <h3 className="line-clamp-2 text-sm font-semibold leading-tight">
-                      {c.title}
-                    </h3>
+                    <h3 className="line-clamp-2 text-sm font-semibold leading-tight">{c.title}</h3>
                     <div>
                       <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
                         <span>{p.percent}% complete</span>
@@ -127,12 +109,7 @@ function Dashboard() {
                       </div>
                       <Progress value={p.percent} className="h-1.5" />
                     </div>
-                    <Button
-                      asChild
-                      size="sm"
-                      variant="secondary"
-                      className="w-full"
-                    >
+                    <Button asChild size="sm" variant="secondary" className="w-full">
                       <Link to="/courses/$id" params={{ id: c.id }}>
                         <PlayCircle className="size-4" /> Resume
                       </Link>
@@ -149,10 +126,7 @@ function Dashboard() {
           {paths.map((path) => {
             const done = path.courseIds.filter((cid) =>
               allProgress.find(
-                (pr) =>
-                  pr.employeeId === me.id &&
-                  pr.courseId === cid &&
-                  pr.status === "completed",
+                (pr) => pr.employeeId === me.id && pr.courseId === cid && pr.status === "completed",
               ),
             ).length;
             const pct = Math.round((done / path.courseIds.length) * 100);
@@ -172,12 +146,7 @@ function Dashboard() {
                     <span>{pct}%</span>
                   </div>
                   <Progress value={pct} className="h-1.5" />
-                  <Button
-                    asChild
-                    size="sm"
-                    variant="outline"
-                    className="mt-4 w-full"
-                  >
+                  <Button asChild size="sm" variant="outline" className="mt-4 w-full">
                     <Link to="/paths/$id" params={{ id: path.id }}>
                       Open path
                     </Link>
@@ -190,9 +159,7 @@ function Dashboard() {
           <Card className="border-dashed">
             <CardContent className="pt-6 text-center">
               <Flame className="mx-auto size-6 text-brand" />
-              <div className="mt-2 text-sm font-medium">
-                5-day learning streak
-              </div>
+              <div className="mt-2 text-sm font-medium">5-day learning streak</div>
               <p className="mt-1 text-xs text-muted-foreground">
                 Keep it going — 20 minutes today unlocks a new badge.
               </p>

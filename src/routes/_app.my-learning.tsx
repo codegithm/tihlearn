@@ -4,12 +4,8 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {
-  CURRENT_EMPLOYEE_ID,
-  assignedPathsFor,
-  getCourse,
-  progress as allProgress,
-} from "@/lib/mock-data";
+import { assignedPathsFor, getCourse, progress as allProgress } from "@/lib/mock-data";
+import { useAzureProfile } from "@/lib/role-store";
 import { PlayCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_app/my-learning")({
@@ -18,8 +14,7 @@ export const Route = createFileRoute("/_app/my-learning")({
       { title: "My Learning — TIH Learn" },
       {
         name: "description",
-        content:
-          "Your in-progress, upcoming and completed courses in one place.",
+        content: "Your in-progress, upcoming and completed courses in one place.",
       },
     ],
   }),
@@ -27,14 +22,13 @@ export const Route = createFileRoute("/_app/my-learning")({
 });
 
 function MyLearning() {
-  const paths = assignedPathsFor(CURRENT_EMPLOYEE_ID);
+  const employeeId = useAzureProfile()?.employee.id ?? "";
+  const paths = assignedPathsFor(employeeId);
   const courseIds = Array.from(new Set(paths.flatMap((p) => p.courseIds)));
   const rows = courseIds
     .map((id) => ({
       course: getCourse(id)!,
-      p: allProgress.find(
-        (pr) => pr.employeeId === CURRENT_EMPLOYEE_ID && pr.courseId === id,
-      ),
+      p: allProgress.find((pr) => pr.employeeId === employeeId && pr.courseId === id),
     }))
     .filter((r) => r.course);
 
@@ -51,9 +45,7 @@ function MyLearning() {
             <Badge variant="secondary" className="text-[10px]">
               {course.category}
             </Badge>
-            <h3 className="line-clamp-2 text-sm font-semibold">
-              {course.title}
-            </h3>
+            <h3 className="line-clamp-2 text-sm font-semibold">{course.title}</h3>
             <div>
               <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
                 <span>{p?.percent ?? 0}%</span>
@@ -93,12 +85,8 @@ function MyLearning() {
 
       <Tabs defaultValue="progress">
         <TabsList>
-          <TabsTrigger value="progress">
-            In progress ({inProgress.length})
-          </TabsTrigger>
-          <TabsTrigger value="upcoming">
-            Upcoming ({notStarted.length})
-          </TabsTrigger>
+          <TabsTrigger value="progress">In progress ({inProgress.length})</TabsTrigger>
+          <TabsTrigger value="upcoming">Upcoming ({notStarted.length})</TabsTrigger>
           <TabsTrigger value="done">Completed ({completed.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="progress" className="mt-6">
